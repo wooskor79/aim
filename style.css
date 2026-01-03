@@ -1,0 +1,45 @@
+:root {
+    --bg-color: #fdfaf1;
+    --sidebar-width: 280px;
+    --pastel-blue: #a2d2ff;
+    --pastel-pink: #ffafcc;
+    --text-color: #555;
+}
+
+body { margin: 0; display: flex; font-family: 'Pretendard', sans-serif; background: var(--bg-color); color: var(--text-color); }
+
+/* 사이드바 */
+#sidebar { 
+    width: var(--sidebar-width); height: 100vh; position: fixed; 
+    background: white; border-right: 1px solid #eee; padding: 30px 20px; box-sizing: border-box;
+}
+
+#sidebar h1 { color: #ffb6c1; text-align: center; font-size: 28px; margin-bottom: 20px; }
+
+/* 입체감 있는 CSS 버튼 */
+.css-btn {
+    display: block; width: 100%; padding: 12px; margin-bottom: 12px;
+    border: none; border-radius: 12px; font-weight: bold; font-size: 16px;
+    cursor: pointer; transition: all 0.1s; text-align: center; text-decoration: none;
+    box-shadow: 0 5px 0 #89b0d6; background: var(--pastel-blue); color: white;
+}
+.css-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #89b0d6; }
+.css-btn-pink { background: var(--pastel-pink); box-shadow: 0 5px 0 #e099b3; color: white; }
+.css-btn-pink:active { box-shadow: 0 2px 0 #e099b3; }
+.css-btn:disabled { background: #ccc; box-shadow: 0 5px 0 #999; cursor: not-allowed; }
+
+/* 볼륨 슬라이더 디자인 */
+.vol-box { margin-top: 15px; display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: bold; }
+input[type=range] { flex: 1; cursor: pointer; accent-color: var(--pastel-blue); }
+
+/* 사진 그리드 */
+#main-content { margin-left: var(--sidebar-width); padding: 40px; width: calc(100% - var(--sidebar-width)); }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+.photo-card { position: relative; aspect-ratio: 1/1; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 4px solid white; }
+.photo-card img { width: 100%; height: 100%; object-fit: cover; }
+.photo-card input { position: absolute; top: 10px; left: 10px; width: 20px; height: 20px; z-index: 5; }
+
+/* 페이지네이션 */
+.pager { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+.pager a { padding: 8px 12px; background: white; border-radius: 8px; text-decoration: none; color: #777; border: 1px solid #ddd; }
+.pager a.active { background: var(--pastel-blue); color: white; border: none; }
