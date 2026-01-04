@@ -4,6 +4,11 @@ let cur = 0;
 let isStarted = false;
 
 $(document).ready(function() {
+    // 테마 복구
+    const savedTheme = localStorage.getItem('theme') || 'dark-mode';
+    $('body').attr('class', savedTheme);
+    $('#theme-checkbox').prop('checked', savedTheme === 'dark-mode');
+
     const lastView = localStorage.getItem('lastView');
     if(lastView === 'upload') showUploadArea();
     else showGallery();
@@ -12,31 +17,28 @@ $(document).ready(function() {
     const volRange = document.getElementById('vol-range');
     if(volRange) {
         volRange.value = 0.3;
-        volRange.addEventListener('input', function() {
-            audio.volume = this.value;
-        });
+        volRange.addEventListener('input', function() { audio.volume = this.value; });
     }
 
     loadBgm();
-
     $(document).one('click', function() {
-        if(!isStarted) {
-            playBgm();
-            isStarted = true;
-        }
-    });
-
-    $('#modal').on('click', function() {
-        $(this).fadeOut(200, function() {
-            $('#modal-img').attr('src', '');
-            $('body').css('overflow', 'auto');
-        });
+        if(!isStarted) { playBgm(); isStarted = true; }
     });
 });
 
+function toggleTheme() {
+    const isChecked = $('#theme-checkbox').is(':checked');
+    if (isChecked) {
+        $('body').removeClass('light-mode').addClass('dark-mode');
+        localStorage.setItem('theme', 'dark-mode');
+    } else {
+        $('body').removeClass('dark-mode').addClass('light-mode');
+        localStorage.setItem('theme', 'light-mode');
+    }
+}
+
 function login() {
     const pwVal = $('#adminPw').val();
-    if(!pwVal) return;
     $.post('api.php?action=login', {pw: pwVal}, function(res) {
         if(res.trim() === 'ok') location.reload();
         else $('#adminPw').val('').focus();
@@ -44,39 +46,22 @@ function login() {
 }
 
 function logout() {
-    $.post('api.php?action=logout', function(res) {
-        if(res.trim() === 'ok') location.reload();
-    });
+    $.post('api.php?action=logout', function() { location.reload(); });
 }
 
 function showGallery() { 
     localStorage.setItem('lastView', 'gallery');
-    $('#gallery-view').show(); 
-    $('#upload-view').hide(); 
+    $('#gallery-view').show(); $('#upload-view').hide(); 
 }
 
 function showUploadArea() { 
     localStorage.setItem('lastView', 'upload');
-    $('#gallery-view').hide(); 
-    $('#upload-view').show(); 
+    $('#gallery-view').hide(); $('#upload-view').show(); 
 }
 
 function checkFiles(input) {
     const display = document.getElementById('file-name-display');
-    if (input.files.length > 0) {
-        display.innerText = input.files.length === 1 ? input.files[0].name : input.files.length + "개의 파일 선택됨";
-    } else {
-        display.innerText = "선택된 파일 없음";
-    }
-
-    for(let f of input.files) {
-        if(f.size > 10*1024*1024) {
-            display.innerText = "10MB 초과 파일 포함됨";
-            display.style.color = "red";
-            input.value = ""; $('#up-btn').prop('disabled', true); return;
-        }
-    }
-    display.style.color = "#888";
+    display.innerText = input.files.length > 0 ? input.files.length + "개 선택됨" : "선택된 파일 없음";
     $('#up-btn').prop('disabled', input.files.length === 0);
 }
 
@@ -84,26 +69,10 @@ function upload() {
     let fd = new FormData();
     for(let f of $('#upFiles')[0].files) fd.append('files[]', f);
     $.ajax({
-        url: 'api.php?action=upload', 
-        data: fd, type: 'POST', processData: false, contentType: false,
+        url: 'api.php?action=upload', data: fd, type: 'POST', 
+        processData: false, contentType: false,
         success: () => { location.reload(); }
     });
-}
-
-function deleteSelectedTemp() {
-    let checked = $('.temp-select:checked');
-    if(checked.length === 0) return;
-    let files = [];
-    checked.each(function(){ files.push($(this).val()); });
-    $.post('api.php?action=delete_temp', {files: files}, () => location.reload());
-}
-
-function moveSelectedToGallery() {
-    let checked = $('.temp-select:checked');
-    if(checked.length === 0) return;
-    let files = [];
-    checked.each(function(){ files.push($(this).val()); });
-    $.post('api.php?action=move_to_gallery', {files: files}, () => { location.reload(); });
 }
 
 function loadBgm() {
@@ -122,8 +91,7 @@ function playBgm() {
         $('#now-title').text("♬ " + playlist[cur]);
         cur = (cur + 1) % playlist.length;
         renderNext();
-        isStarted = true;
-    }).catch(e => console.log("Waiting interaction..."));
+    }).catch(() => {});
 }
 
 function stopBgm() { audio.pause(); $('#now-title').text("BGM 중지됨"); }
