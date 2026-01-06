@@ -69,13 +69,54 @@ if ($action === 'upload') {
 
 if ($action === 'download') {
     $files = $_POST['files'] ?? [];
-    if (count($files) === 1) {
+    $fileCount = count($files);
+
+    if ($fileCount === 0) exit;
+
+    // 1. 단일 파일 다운로드 (기존 로직 유지)
+    if ($fileCount === 1) {
         $filePath = $photoDir . basename($files[0]);
         if (file_exists($filePath)) {
+            // 출력 버퍼 비우기 (이미지 깨짐 방지)
+            if (ob_get_level()) ob_end_clean();
+            
             header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+            header('Content-Length: ' . filesize($filePath));
             readfile($filePath);
             exit;
+        }
+    } 
+    // 2. 다중 파일 다운로드 (ZIP 압축 기능 추가)
+    else {
+        $zip = new ZipArchive();
+        // 유니크한 ZIP 파일명 생성
+        $zipFileName = "aimyon_photos_" . date("Ymd_His") . ".zip";
+        $zipFilePath = $tempDir . $zipFileName;
+
+        if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
+            foreach ($files as $f) {
+                $filePath = $photoDir . basename($f);
+                if (file_exists($filePath)) {
+                    $zip->addFile($filePath, basename($f));
+                }
+            }
+            $zip->close();
+
+            if (file_exists($zipFilePath)) {
+                // 출력 버퍼 비우기
+                if (ob_get_level()) ob_end_clean();
+
+                header('Content-Type: application/zip');
+                header('Content-Disposition: attachment; filename="' . $zipFileName . '"');
+                header('Content-Length: ' . filesize($zipFilePath));
+                
+                readfile($zipFilePath);
+                
+                // 전송 후 임시 ZIP 파일 삭제
+                unlink($zipFilePath);
+                exit;
+            }
         }
     }
 }
