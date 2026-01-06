@@ -57,6 +57,12 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
         <img id="modal-img">
     </div>
 
+    <div id="msg-modal" class="msg-modal">
+        <div class="msg-content">
+            <h3 id="msg-text">알림</h3>
+        </div>
+    </div>
+
     <script src="script.js?v=<?=filemtime('script.js')?>"></script>
 </body>
 </html>

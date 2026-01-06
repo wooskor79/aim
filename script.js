@@ -22,6 +22,12 @@ $(document).ready(function() {
     $(document).one('click', function() {
         if(!isStarted) { playBgm(); isStarted = true; }
     });
+
+    // [수정됨] 접속 후 일정 시간이 지나면 메시지 띄우기
+    // 1000 = 1초, 60000 = 1분, 300000 = 5분
+    setTimeout(function() {
+        showMsgModal("media.wooskor.com");
+    }, 300000); // <-- 여기 숫자를 바꾸면 '몇 분 뒤에 뜰지' 수정 가능 (현재: 5분) 300000
 });
 
 // 핵심 기능: 콘텐츠만 비동기로 교체 (음악 유지)
@@ -122,7 +128,7 @@ function downloadSelected() {
     $('body').append(form); form.submit(); form.remove();
 }
 
-// [수정] 이동(승인) 버튼 클릭 시 UI 전환
+// 이동(승인) 버튼 클릭 시 UI 전환
 function askMove() {
     let checked = $('.temp-select:checked');
     if(checked.length === 0) return alert('이동할 사진을 선택해주세요.');
@@ -152,7 +158,7 @@ function confirmMove() {
     });
 }
 
-// [기존] 삭제 버튼 UI 제어
+// 삭제 버튼 UI 제어
 function askDelete() {
     let checked = $('.temp-select:checked');
     if(checked.length === 0) return alert('삭제할 사진을 선택해주세요.');
@@ -180,4 +186,26 @@ function confirmDelete() {
             cancelDelete();
         }
     });
+}
+
+// 스크롤 시 배경 보이게 하는 효과
+let scrollTimer = null;
+$(window).on('scroll', function() {
+    $('#main-content').addClass('is-scrolling');
+    if(scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function() {
+        $('#main-content').removeClass('is-scrolling');
+    }, 250);
+});
+
+// [수정됨] 메시지 모달 제어 함수
+function showMsgModal(text) {
+    $('#msg-text').text(text);
+    $('#msg-modal').addClass('show').css('display', 'flex');
+
+    // 메시지 표시 후 사라지는 시간 설정
+    setTimeout(function() {
+        $('#msg-modal').removeClass('show');
+        setTimeout(() => $('#msg-modal').css('display', 'none'), 500); 
+    }, 500); // <-- 여기 숫자를 바꾸면 '몇 초 동안 떠있을지' 수정 가능 (현재: 5초)
 }
