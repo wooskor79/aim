@@ -98,10 +98,12 @@ function closeModal() {
 
 // 갤러리 관련 함수들
 function selectAll(cls) { $(cls).prop('checked', true); }
+
 function checkFiles(input) {
     $('#file-name-display').text(input.files.length + "개 선택됨");
     $('#up-btn').prop('disabled', input.files.length === 0);
 }
+
 function upload() {
     let fd = new FormData();
     for(let f of $('#upFiles')[0].files) fd.append('files[]', f);
@@ -111,10 +113,71 @@ function upload() {
         success: () => { loadPage(1, 'upload'); }
     });
 }
+
 function downloadSelected() {
     let checked = $('.img-select:checked');
     if(checked.length === 0) return;
     let form = $('<form method="POST" action="api.php?action=download"></form>');
     checked.each(function(){ form.append(`<input type="hidden" name="files[]" value="${$(this).val()}">`); });
     $('body').append(form); form.submit(); form.remove();
+}
+
+// [수정] 이동(승인) 버튼 클릭 시 UI 전환
+function askMove() {
+    let checked = $('.temp-select:checked');
+    if(checked.length === 0) return alert('이동할 사진을 선택해주세요.');
+    
+    $('#btn-move-ask').hide();
+    $('#box-move-confirm').css('display', 'flex');
+}
+
+function cancelMove() {
+    $('#box-move-confirm').hide();
+    $('#btn-move-ask').show();
+}
+
+function confirmMove() {
+    let checked = $('.temp-select:checked');
+    let files = [];
+    checked.each(function() { files.push($(this).val()); });
+
+    $.post('api.php?action=move_to_gallery', { files: files }, function(res) {
+        if(res.trim() === 'ok') {
+            $('#move-area').html('<span style="color:#10b981; font-weight:bold; padding: 12px;">이동 완료!</span>');
+            setTimeout(function() { loadPage(1, 'upload'); }, 800);
+        } else {
+            alert('오류 발생: ' + res);
+            cancelMove();
+        }
+    });
+}
+
+// [기존] 삭제 버튼 UI 제어
+function askDelete() {
+    let checked = $('.temp-select:checked');
+    if(checked.length === 0) return alert('삭제할 사진을 선택해주세요.');
+    
+    $('#btn-del-ask').hide();
+    $('#box-del-confirm').css('display', 'flex');
+}
+
+function cancelDelete() {
+    $('#box-del-confirm').hide();
+    $('#btn-del-ask').show();
+}
+
+function confirmDelete() {
+    let checked = $('.temp-select:checked');
+    let files = [];
+    checked.each(function() { files.push($(this).val()); });
+
+    $.post('api.php?action=delete_temp', { files: files }, function(res) {
+        if(res.trim() === 'ok') {
+            $('#del-area').html('<span style="color:#ef4444; font-weight:bold; padding: 12px;">삭제 완료!</span>');
+            setTimeout(function() { loadPage(1, 'upload'); }, 800);
+        } else {
+            alert('오류 발생: ' + res);
+            cancelDelete();
+        }
+    });
 }

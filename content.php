@@ -41,16 +41,45 @@ if ($view === 'gallery') {
     $tempFiles = array_map('basename', glob($tempDir . "*.{jpg,jpeg,png,gif,webp,jfif}", GLOB_BRACE) ?: []);
 ?>
     <h2 style="color:var(--accent-blue); margin-bottom:20px;">업로드 대기열</h2>
-    <div id="upload-input-box" style="background:var(--card-bg); padding:40px; border:2px dashed var(--border-color); border-radius:15px; text-align: center;">
+    
+    <div id="upload-input-box" style="background:var(--card-bg); padding:40px; border:2px dashed var(--border-color); border-radius:15px; text-align: center; margin-bottom: 30px;">
         <input type="file" id="upFiles" multiple onchange="checkFiles(this)" style="display:none;">
         <label for="upFiles" class="css-btn" style="width: auto; display: inline-block; padding: 12px 40px;">파일 선택하기</label>
         <div id="file-name-display" style="margin-top:15px; font-size:13px; color:#888;">선택된 파일 없음</div>
         <button id="up-btn" class="css-btn css-btn-gray" style="width:auto; padding: 10px 40px; margin: 20px auto 0;" disabled onclick="upload()">대기열로 업로드</button>
     </div>
+
+    <?php if($isAdmin && count($tempFiles) > 0): ?>
+        <div class="action-bar" style="margin-bottom: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border-color); padding-top: 20px; align-items: center;">
+            <button class="css-btn" style="width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="selectAll('.temp-select')">전체선택</button>
+            
+            <div id="move-area" style="display: flex; align-items: center;">
+                <button id="btn-move-ask" class="css-btn" style="background: #10b981; color: white; width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="askMove()">갤러리로 이동(승인)</button>
+                
+                <div id="box-move-confirm" style="display:none; gap: 8px; align-items: center;">
+                    <span style="color: #10b981; font-weight: bold; font-size: 13px; margin-right: 5px;">정말 이동?</span>
+                    <button class="css-btn" style="background: #10b981; color: white; width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="confirmMove()">예</button>
+                    <button class="css-btn css-btn-gray" style="width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="cancelMove()">아니오</button>
+                </div>
+            </div>
+
+            <div id="del-area" style="display: flex; align-items: center;">
+                <button id="btn-del-ask" class="css-btn" style="background: #ef4444; color: white; width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="askDelete()">선택 삭제</button>
+                <div id="box-del-confirm" style="display:none; gap: 8px; align-items: center;">
+                    <span style="color: #ef4444; font-weight: bold; font-size: 13px; margin-right: 5px;">정말 삭제?</span>
+                    <button class="css-btn" style="background: #ef4444; color: white; width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="confirmDelete()">예</button>
+                    <button class="css-btn css-btn-gray" style="width: auto; padding: 8px 20px; margin-bottom: 0;" onclick="cancelDelete()">아니오</button>
+                </div>
+            </div>
+        </div>
+    <?php endif; ?>
     
-    <div class="photo-grid" style="margin-top:30px;">
+    <div class="photo-grid">
         <?php foreach($tempFiles as $tfile): ?>
             <div class="photo-card">
+                <?php if($isAdmin): ?>
+                    <input type="checkbox" class="temp-select" value="<?=basename($tfile)?>">
+                <?php endif; ?>
                 <img src="stream.php?type=temp&file=<?=urlencode($tfile)?>" onclick="openModal('stream.php?type=temp&file=<?=urlencode($tfile)?>&full=1')">
             </div>
         <?php endforeach; ?>

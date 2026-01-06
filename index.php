@@ -7,7 +7,7 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
 <head>
     <meta charset="UTF-8">
     <title>Aimyon Gallery</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=<?=filemtime('style.css')?>">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="dark-mode">
@@ -57,6 +57,6 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
         <img id="modal-img">
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=<?=filemtime('script.js')?>"></script>
 </body>
 </html>
