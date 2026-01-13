@@ -23,11 +23,10 @@ $(document).ready(function() {
         if(!isStarted) { playBgm(); isStarted = true; }
     });
 
-    // [수정됨] 접속 후 일정 시간이 지나면 메시지 띄우기
-    // 1000 = 1초, 60000 = 1분, 300000 = 5분
+    // 접속 후 5분 뒤 메시지 띄우기
     setTimeout(function() {
         showMsgModal("media.wooskor.com");
-    }, 300000); // <-- 여기 숫자를 바꾸면 '몇 분 뒤에 뜰지' 수정 가능 (현재: 5분) 300000
+    }, 300000); 
 });
 
 // 핵심 기능: 콘텐츠만 비동기로 교체 (음악 유지)
@@ -90,13 +89,33 @@ function login() {
 
 function logout() { $.post('api.php?action=logout', () => location.reload()); }
 
+// 이미지 모달 열기
 function openModal(src) { 
-    $('#modal-img').attr('src', src); 
+    $('#modal-video').hide().attr('src', ''); // 기존 영상 소스 제거
+    $('#modal-img').attr('src', src).show(); 
     $('#modal').css('display', 'flex').hide().fadeIn(200); 
     $('body').css('overflow', 'hidden');
 }
 
+// 영상 모달 열기 (영상 재생 시 BGM 정지)
+function openVideoModal(src) {
+    stopBgm(); 
+    $('#modal-img').hide();
+    $('#modal-video').attr('src', src).show();
+    $('#modal').css('display', 'flex').hide().fadeIn(200);
+    $('body').css('overflow', 'hidden');
+    $('#modal-video')[0].play();
+}
+
+// 모달 닫기 (영상 정지 및 소스 비우기 로직 포함)
 function closeModal() {
+    const videoElement = $('#modal-video')[0];
+    if (videoElement) {
+        videoElement.pause();    // 재생 일시정지
+        videoElement.src = "";   // 소스 비우기 (음성 차단 핵심)
+        videoElement.load();     // 변경사항 즉시 적용
+    }
+
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
     });
@@ -128,11 +147,9 @@ function downloadSelected() {
     $('body').append(form); form.submit(); form.remove();
 }
 
-// 이동(승인) 버튼 클릭 시 UI 전환
 function askMove() {
     let checked = $('.temp-select:checked');
     if(checked.length === 0) return alert('이동할 사진을 선택해주세요.');
-    
     $('#btn-move-ask').hide();
     $('#box-move-confirm').css('display', 'flex');
 }
@@ -146,7 +163,6 @@ function confirmMove() {
     let checked = $('.temp-select:checked');
     let files = [];
     checked.each(function() { files.push($(this).val()); });
-
     $.post('api.php?action=move_to_gallery', { files: files }, function(res) {
         if(res.trim() === 'ok') {
             $('#move-area').html('<span style="color:#10b981; font-weight:bold; padding: 12px;">이동 완료!</span>');
@@ -158,11 +174,9 @@ function confirmMove() {
     });
 }
 
-// 삭제 버튼 UI 제어
 function askDelete() {
     let checked = $('.temp-select:checked');
     if(checked.length === 0) return alert('삭제할 사진을 선택해주세요.');
-    
     $('#btn-del-ask').hide();
     $('#box-del-confirm').css('display', 'flex');
 }
@@ -176,7 +190,6 @@ function confirmDelete() {
     let checked = $('.temp-select:checked');
     let files = [];
     checked.each(function() { files.push($(this).val()); });
-
     $.post('api.php?action=delete_temp', { files: files }, function(res) {
         if(res.trim() === 'ok') {
             $('#del-area').html('<span style="color:#ef4444; font-weight:bold; padding: 12px;">삭제 완료!</span>');
@@ -198,14 +211,12 @@ $(window).on('scroll', function() {
     }, 250);
 });
 
-// [수정됨] 메시지 모달 제어 함수
+// 메시지 모달 제어 함수
 function showMsgModal(text) {
     $('#msg-text').text(text);
     $('#msg-modal').addClass('show').css('display', 'flex');
-
-    // 메시지 표시 후 사라지는 시간 설정
     setTimeout(function() {
         $('#msg-modal').removeClass('show');
         setTimeout(() => $('#msg-modal').css('display', 'none'), 500); 
-    }, 500); // <-- 여기 숫자를 바꾸면 '몇 초 동안 떠있을지' 수정 가능 (현재: 5초)
+    }, 5000); 
 }
