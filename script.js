@@ -4,12 +4,10 @@ let cur = 0;
 let isStarted = false;
 
 $(document).ready(function() {
-    // 테마 설정
     const savedTheme = localStorage.getItem('theme') || 'dark-mode';
     $('body').attr('class', savedTheme);
     $('#theme-checkbox').prop('checked', savedTheme === 'dark-mode');
 
-    // 초기 페이지 로드
     const lastPage = localStorage.getItem('lastPage') || 1;
     const lastView = localStorage.getItem('lastView') || 'gallery';
     loadPage(lastPage, lastView);
@@ -23,13 +21,11 @@ $(document).ready(function() {
         if(!isStarted) { playBgm(); isStarted = true; }
     });
 
-    // 접속 후 5분 뒤 메시지 띄우기
     setTimeout(function() {
         showMsgModal("media.wooskor.com");
     }, 300000); 
 });
 
-// 핵심 기능: 콘텐츠만 비동기로 교체 (음악 유지)
 function loadPage(page, view) {
     localStorage.setItem('lastPage', page);
     localStorage.setItem('lastView', view);
@@ -89,15 +85,13 @@ function login() {
 
 function logout() { $.post('api.php?action=logout', () => location.reload()); }
 
-// 이미지 모달 열기
 function openModal(src) { 
-    $('#modal-video').hide().attr('src', ''); // 기존 영상 소스 제거
+    $('#modal-video').hide().attr('src', ''); 
     $('#modal-img').attr('src', src).show(); 
     $('#modal').css('display', 'flex').hide().fadeIn(200); 
     $('body').css('overflow', 'hidden');
 }
 
-// 영상 모달 열기 (영상 재생 시 BGM 정지)
 function openVideoModal(src) {
     stopBgm(); 
     $('#modal-img').hide();
@@ -107,21 +101,21 @@ function openVideoModal(src) {
     $('#modal-video')[0].play();
 }
 
-// 모달 닫기 (영상 정지 및 소스 비우기 로직 포함)
 function closeModal() {
     const videoElement = $('#modal-video')[0];
     if (videoElement) {
-        videoElement.pause();    // 재생 일시정지
-        videoElement.src = "";   // 소스 비우기 (음성 차단 핵심)
-        videoElement.load();     // 변경사항 즉시 적용
+        videoElement.pause();
+        videoElement.src = "";
+        videoElement.load();
     }
 
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
+        // 모달 닫기 완료 후 배경음악 다시 재생
+        playBgm();
     });
 }
 
-// 갤러리 관련 함수들
 function selectAll(cls) { $(cls).prop('checked', true); }
 
 function checkFiles(input) {
@@ -201,7 +195,6 @@ function confirmDelete() {
     });
 }
 
-// 스크롤 시 배경 보이게 하는 효과
 let scrollTimer = null;
 $(window).on('scroll', function() {
     $('#main-content').addClass('is-scrolling');
@@ -211,7 +204,6 @@ $(window).on('scroll', function() {
     }, 250);
 });
 
-// 메시지 모달 제어 함수
 function showMsgModal(text) {
     $('#msg-text').text(text);
     $('#msg-modal').addClass('show').css('display', 'flex');
