@@ -74,9 +74,19 @@ if ($action === 'download') {
 
     if ($fileCount === 0) exit;
 
+    // [수정됨] 파일 경로 찾는 헬퍼 함수 (사진 폴더 없으면 영상 폴더 확인)
+    function getFilePath($fname, $pDir, $vDir) {
+        $p = $pDir . basename($fname);
+        if (file_exists($p)) return $p;
+        $v = $vDir . basename($fname);
+        if (file_exists($v)) return $v;
+        return null;
+    }
+
     if ($fileCount === 1) {
-        $filePath = $photoDir . basename($files[0]);
-        if (file_exists($filePath)) {
+        $filePath = getFilePath($files[0], $photoDir, $videoDir);
+        
+        if ($filePath && file_exists($filePath)) {
             if (ob_get_level()) ob_end_clean();
             header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
@@ -87,13 +97,13 @@ if ($action === 'download') {
     } 
     else {
         $zip = new ZipArchive();
-        $zipFileName = "aimyon_photos_" . date("Ymd_His") . ".zip";
+        $zipFileName = "aimyon_files_" . date("Ymd_His") . ".zip"; // 파일명 photos -> files로 변경
         $zipFilePath = $tempDir . $zipFileName;
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
             foreach ($files as $f) {
-                $filePath = $photoDir . basename($f);
-                if (file_exists($filePath)) {
+                $filePath = getFilePath($f, $photoDir, $videoDir);
+                if ($filePath && file_exists($filePath)) {
                     $zip->addFile($filePath, basename($f));
                 }
             }

@@ -24,7 +24,10 @@ if ($view === 'gallery' || $view === 'video') {
 ?>
     <?php drawPager($page, $pages, $view); ?>
     
-    <?php if($view === 'gallery'): ?>
+    <?php 
+    // [수정됨] 갤러리뿐만 아니라 비디오 뷰에서도 툴바(전체선택/다운로드) 표시
+    if($view === 'gallery' || $view === 'video'): 
+    ?>
     <div class="toolbar">
         <button class="css-btn css-btn-gray" onclick="selectAll('.img-select')">전체 선택</button>
         <button class="css-btn" style="background: #f59e0b; color: #fff;" onclick="downloadSelected()">선택 다운로드</button>
@@ -34,6 +37,8 @@ if ($view === 'gallery' || $view === 'video') {
     <div class="photo-grid">
         <?php foreach($items as $item): ?>
             <div class="photo-card">
+                <input type="checkbox" class="img-select" value="<?=basename($item)?>">
+                
                 <?php if($view === 'video'): ?>
                     <div class="video-preview-wrapper" 
                          onclick="openVideoModal('stream.php?type=video&file=<?=urlencode(basename($item))?>')" 
@@ -48,7 +53,6 @@ if ($view === 'gallery' || $view === 'video') {
                         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.7); font-size:30px; pointer-events:none;">▶</div>
                     </div>
                 <?php else: ?>
-                    <input type="checkbox" class="img-select" value="<?=basename($item)?>">
                     <img src="stream.php?file=<?=urlencode(basename($item))?>&thumb=1" onclick="openModal('stream.php?file=<?=urlencode(basename($item))?>&full=1')">
                 <?php endif; ?>
             </div>
