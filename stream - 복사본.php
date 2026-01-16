@@ -6,7 +6,9 @@
  * ========================= */
 $photoCacheDir = "/volume1/etc/cache/photos/";
 $videoCacheDir = "/volume1/etc/cache/videos/";
-$logFile       = $videoCacheDir . "debug.log"; // 로그도 캐시 폴더에 저장
+
+// [수정] 로그 파일을 캐시 폴더 안에 생성 (찾기 쉽고 권한 문제 예방)
+$logFile       = $videoCacheDir . "debug.log";
 
 // 캐시 폴더 생성
 @mkdir($photoCacheDir, 0777, true);
@@ -41,7 +43,7 @@ if (!file_exists($sourcePath)) {
 }
 
 /* =========================
- * 4. 전체 보기 및 스트리밍 (기존 로직 유지)
+ * 4. 전체 보기 및 스트리밍
  * ========================= */
 if ($full || ($type === 'video' && !$isThumb)) {
     $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
@@ -101,7 +103,7 @@ if ($full || ($type === 'video' && !$isThumb)) {
 }
 
 /* =========================
- * 5. 썸네일 캐시 경로 확인
+ * 5. 썸네일 캐시 경로
  * ========================= */
 $cachePath = ($type === 'video')
     ? $videoCacheDir . $file . ".jpg"
@@ -155,52 +157,34 @@ if (!$created && in_array($ext, ['jpg','jpeg','png']) && function_exists('imagec
 
 // (3) Video/GIF (FFmpeg)
 if (!$created && ($ext === 'gif' || $type === 'video')) {
-    
-    // [수정됨] FFmpeg 경로 탐색 순서 변경 (패키지 버전 우선)
-    $ffmpeg_candidates = [
-        '/var/packages/ffmpeg7/target/bin/ffmpeg', // 최신 패키지
-        '/var/packages/ffmpeg6/target/bin/ffmpeg', // 구버전 패키지
-        '/var/packages/ffmpeg/target/bin/ffmpeg',  // 일반 패키지
-        '/usr/local/bin/ffmpeg',
-        '/usr/bin/ffmpeg' // 내장 (기능제한 버전) - 최후순위
-    ];
-
-    $ffmpeg = '';
-    foreach ($ffmpeg_candidates as $path) {
-        if (file_exists($path)) {
-            $ffmpeg = $path;
-            
-            // 라이브러리 경로 설정 (패키지 버전일 경우 필요할 수 있음)
-            if (strpos($path, 'packages') !== false) {
-                 $libPath = dirname(dirname($path)) . '/lib';
-                 putenv("LD_LIBRARY_PATH=$libPath");
-            }
-            break;
-        }
+    // 1. FFmpeg 경로 찾기
+    $ffmpeg = "/usr/bin/ffmpeg";
+    if (!file_exists($ffmpeg)) $ffmpeg = "/opt/bin/ffmpeg";
+    if (!file_exists($ffmpeg)) {
+        $ffmpeg = "/var/packages/ffmpeg7/target/bin/ffmpeg";
+        putenv("LD_LIBRARY_PATH=/var/packages/ffmpeg7/target/lib");
     }
 
-    if ($ffmpeg) {
-        $seek = ($type === 'video') ? "-ss 00:00:02" : "";
-        
-        // 명령어 실행
-        $cmd = "$ffmpeg -y $seek -i " . escapeshellarg($sourcePath)
-             . " -vframes 1 -an -q:v 2 -f image2 " . escapeshellarg($cachePath) . " 2>&1";
+    $seek = ($type === 'video') ? "-ss 00:00:02" : "";
+    
+    // 명령어
+    $cmd = "$ffmpeg -y $seek -i " . escapeshellarg($sourcePath)
+         . " -vframes 1 -an -q:v 2 -f image2 " . escapeshellarg($cachePath) . " 2>&1";
 
-        exec($cmd, $out, $ret);
+    exec($cmd, $out, $ret);
 
-        if (file_exists($cachePath) && filesize($cachePath) > 0) {
-            $created = true;
-        } else {
-            // 디버그 로그 기록
-            $logContent = "-------------- " . date('Y-m-d H:i:s') . " --------------\n";
-            $logContent .= "Selected FFmpeg: $ffmpeg\n"; // 어떤 ffmpeg가 선택됐는지 확인
-            $logContent .= "File: $file\n";
-            $logContent .= "Result Code: $ret\n";
-            $logContent .= "Output:\n" . implode("\n", $out) . "\n\n";
-            @file_put_contents($logFile, $logContent, FILE_APPEND);
-        }
+    if (file_exists($cachePath) && filesize($cachePath) > 0) {
+        $created = true;
     } else {
-        @file_put_contents($logFile, "No FFmpeg found in candidates.\n", FILE_APPEND);
+        // [중요] 디버그 로그 기록
+        $logContent = "-------------- " . date('Y-m-d H:i:s') . " --------------\n";
+        $logContent .= "FFmpeg Found At: $ffmpeg\n";
+        $logContent .= "Target File: $file\n";
+        $logContent .= "Source Path: $sourcePath\n";
+        $logContent .= "Command: $cmd\n";
+        $logContent .= "Result Code: $ret\n";
+        $logContent .= "Output:\n" . implode("\n", $out) . "\n\n";
+        @file_put_contents($logFile, $logContent, FILE_APPEND);
     }
 }
 
