@@ -3,20 +3,27 @@ session_start();
 $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
 $photoDir = "/volume1/ShareFolder/aimyon/Photos/";
 $videoDir = "/volume1/ShareFolder/aimyon/묭영상/";
-$tempDir = "/volume1/etc/aim/photo/";
+$tempDir  = "/volume1/etc/aim/photo/";
 
 $view = $_GET['view'] ?? 'gallery';
 $page = $_GET['page'] ?? 1;
 $per = 150;
 
+// ---------------------------------------------------------
+// 1. 갤러리 / 비디오 모드
+// ---------------------------------------------------------
 if ($view === 'gallery' || $view === 'video') {
     $files = ($view === 'video') 
         ? glob($videoDir . "*.{mp4,webm,mov,m4v,MP4}", GLOB_BRACE)
         : glob($photoDir . "*.{jpg,jpeg,png,gif,webp,jfif}", GLOB_BRACE);
 
-    usort($files, function($a, $b) {
-        return filemtime($b) - filemtime($a);
-    });
+    if($files) {
+        usort($files, function($a, $b) {
+            return filemtime($b) - filemtime($a);
+        });
+    } else {
+        $files = [];
+    }
 
     $total = count($files);
     $pages = ceil($total / $per);
@@ -24,18 +31,15 @@ if ($view === 'gallery' || $view === 'video') {
 ?>
     <?php drawPager($page, $pages, $view); ?>
     
-    <?php if($view === 'gallery' || $view === 'video'): ?>
     <div class="toolbar">
         <button class="css-btn css-btn-gray" onclick="selectAll('.img-select')">전체 선택</button>
         <button class="css-btn" style="background: #f59e0b; color: #fff;" onclick="downloadSelected()">선택 다운로드</button>
     </div>
-    <?php endif; ?>
 
     <div class="photo-grid">
         <?php foreach($items as $item): ?>
             <div class="photo-card">
                 <input type="checkbox" class="img-select" value="<?=basename($item)?>">
-                
                 <?php if($view === 'video'): ?>
                     <?php
                         $thumbPath = "/volume1/etc/cache/videos/" . basename($item) . ".jpg";
@@ -54,7 +58,7 @@ if ($view === 'gallery' || $view === 'video') {
                                    style="width:100%; height:100%; object-fit:cover; pointer-events: none;">
                             </video>
                         <?php endif; ?>
-                        <div class="video-info" style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:10px; padding:4px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        <div class="video-info" style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:10px; padding:4px; text-align:center;">
                             <?=basename($item)?>
                         </div>
                         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:rgba(255,255,255,0.7); font-size:30px; pointer-events:none;">▶</div>
@@ -65,12 +69,11 @@ if ($view === 'gallery' || $view === 'video') {
             </div>
         <?php endforeach; ?>
     </div>
-
     <?php drawPager($page, $pages, $view); ?>
 
 <?php 
 // ---------------------------------------------------------
-// 업로드 페이지
+// 2. 업로드 페이지 (수정된 부분)
 // ---------------------------------------------------------
 } else { 
 ?>
@@ -85,18 +88,23 @@ if ($view === 'gallery' || $view === 'video') {
         
         <input type="file" id="upFiles" multiple accept="image/*,video/*" style="display:none;">
 
-        <div id="preview-area"></div>
+        <div id="preview-area" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:10px; margin-bottom:20px;"></div>
 
-        <button id="up-btn" class="css-btn" style="background:#10b981; width:100%; margin-top:10px;" onclick="uploadNewFiles()" disabled>
-            선택한 사진 업로드
+        <button id="up-btn" class="css-btn disabled" style="background:#10b981; width:100%; margin-top:10px;" onclick="uploadNewFiles()" disabled>
+            파일을 선택해주세요
         </button>
 
         <?php
+            // 임시 폴더 파일 목록 스캔
+            // [중요] 관리자가 아니어도 업로드 결과를 볼 수 있게 조건 완화 (원하시면 $isAdmin && 추가)
             $tempFiles = glob($tempDir . "*");
+            
             if(count($tempFiles) > 0):
         ?>
         <div class="staging-area">
-            <h3 style="color:var(--text-color); margin-bottom:15px; margin-top:30px;">업로드된 사진 관리 (<?=count($tempFiles)?>장)</h3>
+            <h3 style="color:var(--text-color); margin-bottom:15px; margin-top:30px; border-top:1px solid var(--border-color); padding-top:20px;">
+                업로드 대기 중인 사진 (<?=count($tempFiles)?>장)
+            </h3>
             
             <div class="toolbar">
                 <button class="css-btn css-btn-gray" onclick="selectAll('.temp-select')">전체 선택</button>
@@ -123,6 +131,9 @@ if ($view === 'gallery' || $view === 'video') {
                         <input type="checkbox" class="temp-select" value="<?=basename($tf)?>">
                         <img src="stream.php?type=temp&file=<?=urlencode(basename($tf))?>&thumb=1" 
                              onclick="openModal('stream.php?type=temp&file=<?=urlencode(basename($tf))?>&full=1')">
+                        <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.5); color:white; font-size:10px; text-align:center;">
+                            <?=basename($tf)?>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>

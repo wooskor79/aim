@@ -7,7 +7,6 @@
     --border-color: #475569;
     --sidebar-width: 280px;
 }
-
 body.light-mode {
     --bg-color: #f8fafc;
     --sidebar-bg: #ffffff;
@@ -16,18 +15,14 @@ body.light-mode {
     --accent-blue: #0284c7;
     --border-color: #e2e8f0;
 }
-
 body { 
     margin: 0; display: flex; font-family: 'Pretendard', sans-serif; 
-    
-    /* 배경 이미지 설정 */
     background-color: var(--bg-color);
     background-image: url('bg.jpg');   
     background-repeat: no-repeat;
     background-position: center center;
     background-attachment: fixed;      
     background-size: cover;            
-
     color: var(--text-color); 
     transition: background 0.3s; overflow-x: hidden;
 }
@@ -37,7 +32,6 @@ body {
     background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 30px 20px; box-sizing: border-box;
     z-index: 100;
 }
-
 #sidebar h1 { color: var(--accent-blue); text-align: center; font-size: 24px; margin-bottom: 25px; }
 
 .css-btn {
@@ -48,23 +42,11 @@ body {
 .css-btn-gray { background: #64748b; color: white; }
 .css-btn:hover { opacity: 0.9; }
 
-/* [수정됨] 툴바 스타일: flex-end(오른쪽) -> flex-start(왼쪽) */
 .toolbar {
-    display: flex;
-    justify-content: flex-start; /* 왼쪽 정렬 */
-    gap: 10px;
-    margin: 10px 0 15px;
-    padding-right: 5px;
+    display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0 15px; padding-right: 5px;
 }
-.toolbar .css-btn {
-    width: auto; 
-    display: inline-block;
-    padding: 8px 16px;
-    margin-bottom: 0;
-    font-size: 13px;
-}
+.toolbar .css-btn { width: auto; display: inline-block; padding: 8px 16px; margin-bottom: 0; font-size: 13px; }
 
-/* 토글 스위치 */
 .switch-wrap { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
 .switch { position: relative; display: inline-block; width: 46px; height: 22px; }
 .switch input { opacity: 0; width: 0; height: 0; }
@@ -91,20 +73,11 @@ input:checked + .slider:before { transform: translateX(24px); }
     background: var(--bg-color); color: var(--text-color); text-align: center; margin-bottom: 10px; box-sizing: border-box;
 }
 
-/* 메인 콘텐츠 트랜지션 및 스크롤 효과 */
 #main-content { 
-    margin-left: var(--sidebar-width); 
-    padding: 40px; 
-    width: calc(100% - var(--sidebar-width)); 
+    margin-left: var(--sidebar-width); padding: 40px; width: calc(100% - var(--sidebar-width)); 
     transition: opacity 0.4s ease, filter 0.4s ease; 
-    will-change: opacity, filter;
 }
-
-#main-content.is-scrolling {
-    opacity: 0.15;
-    filter: blur(4px);
-    pointer-events: none;
-}
+#main-content.is-scrolling { opacity: 0.15; filter: blur(4px); pointer-events: none; }
 
 .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
 .photo-card { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: var(--card-bg); border: 1px solid var(--border-color); }
@@ -118,125 +91,51 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 .pager a.active { background: var(--accent-blue); color: #0f172a; border-color: var(--accent-blue); font-weight: bold; }
 
-/* 이미지 모달 */
 #modal {
     display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center;
 }
 #modal-img { max-width: 95%; max-height: 95%; object-fit: contain; }
 
-/* 메시지 모달 스타일 */
 .msg-modal {
-    display: none;
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 20000;
-    justify-content: center; align-items: center;
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); z-index: 20000; justify-content: center; align-items: center;
     opacity: 0; transition: opacity 0.5s ease;
 }
-
-.msg-modal.show {
-    display: flex;
-    opacity: 1;
-}
-
+.msg-modal.show { display: flex; opacity: 1; }
 .msg-content {
-    background: var(--card-bg);
-    padding: 30px 50px;
-    border-radius: 15px;
-    border: 1px solid var(--accent-blue);
-    text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    transform: translateY(20px);
-    transition: transform 0.5s ease;
+    background: var(--card-bg); padding: 30px 50px; border-radius: 15px; border: 1px solid var(--accent-blue);
+    text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); transform: translateY(20px); transition: transform 0.5s ease;
 }
+.msg-modal.show .msg-content { transform: translateY(0); }
+#msg-text { color: var(--text-color); font-size: 20px; font-weight: bold; margin: 0; }
 
-.msg-modal.show .msg-content {
-    transform: translateY(0);
-}
-
-#msg-text {
-    color: var(--text-color);
-    font-size: 20px;
-    font-weight: bold;
-    margin: 0;
-}
-/* style.css 기존 내용 아래에 추가 또는 덮어쓰기 */
-
-/* ... (기존 CSS 유지) ... */
-
-/* [추가됨] 업로드 페이지 스타일 */
+/* [업로드 페이지 스타일] */
 .upload-container {
-    max-width: 800px;
-    margin: 0 auto;
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: 15px;
-    border: 1px solid var(--border-color);
+    max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 30px;
+    border-radius: 15px; border: 1px solid var(--border-color);
 }
+.upload-title { text-align: center; margin-bottom: 20px; color: var(--accent-blue); }
 
-.upload-title {
-    text-align: center;
-    margin-bottom: 20px;
-    color: var(--accent-blue);
-}
-
-/* 드래그 앤 드롭 존 */
 #drop-zone {
-    width: 100%;
-    height: 200px;
-    border: 2px dashed var(--border-color);
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: 0.3s;
-    background: rgba(0,0,0,0.2);
-    color: #94a3b8;
-    margin-bottom: 20px;
+    width: 100%; height: 200px; border: 2px dashed var(--border-color); border-radius: 10px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.2); color: #94a3b8; margin-bottom: 20px;
 }
-
-#drop-zone.dragover {
-    border-color: var(--accent-blue);
-    background: rgba(56, 189, 248, 0.1);
-    color: var(--accent-blue);
-}
-
+#drop-zone.dragover { border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); }
 #drop-zone p { margin: 5px 0; font-size: 14px; }
 #drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
 
-/* 업로드 전 미리보기 그리드 */
 #preview-area {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 20px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px;
 }
-
 .preview-item {
-    position: relative;
-    aspect-ratio: 1/1;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
+    position: relative; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);
 }
-
-.preview-item img {
-    width: 100%; height: 100%; object-fit: cover;
-}
-
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
 .preview-remove {
-    position: absolute; top: 2px; right: 2px;
-    background: rgba(0,0,0,0.7); color: white;
-    border: none; border-radius: 50%; width: 20px; height: 20px;
-    cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: white;
+    border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;
+    font-size: 12px; display: flex; align-items: center; justify-content: center;
 }
-
-/* 대기열(Staging) 영역 스타일 */
-.staging-area {
-    margin-top: 40px;
-    padding-top: 20px;
-    border-top: 1px solid var(--border-color);
-}
+.staging-area { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); }
