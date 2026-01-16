@@ -1,16 +1,26 @@
 <?php
 session_start();
-// ------------------------------------------------------------------
-// [설정] 경로 설정
-// ------------------------------------------------------------------
-$photoDir = "/volume1/ShareFolder/aimyon/Photos/"; 
-$videoDir = "/volume1/ShareFolder/aimyon/묭영상/";
-$tempDir  = "/volume1/etc/aim/photo/";             
-$pwFile   = "/volume1/etc/aim/password.txt";
-$bgmDir   = "./bgm/";
+// 설정 파일 불러오기
+$config = include 'config.php';
+
+// 변수 매핑
+$photoDirs = $config['photo_dirs'];
+$videoDirs = $config['video_dirs'];
+$tempDir   = $config['temp_dir'];
+$pwFile    = $config['pw_file'];
+$bgmDir    = $config['bgm_dir'];
 
 $action  = $_REQUEST['action'] ?? '';
 $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
+
+// 파일 위치 찾는 헬퍼 함수
+function findFileInDirs($filename, $dirs) {
+    foreach ($dirs as $dir) {
+        $path = $dir . $filename;
+        if (file_exists($path)) return $path;
+    }
+    return null;
+}
 
 // 1. 로그인
 if ($action === 'login') {
@@ -40,7 +50,7 @@ if ($action === 'get_bgm') {
     exit;
 }
 
-// 4. [관리자] 선택 삭제 (주석 해제됨)
+// 4. [관리자] 선택 삭제
 if ($action === 'delete_temp' && $isAdmin) {
     $files = $_POST['files'] ?? [];
     foreach($files as $f) {
@@ -50,8 +60,11 @@ if ($action === 'delete_temp' && $isAdmin) {
     echo "ok"; exit;
 }
 
-// 5. [관리자] 갤러리로 이동 (주석 해제됨)
+// 5. [관리자] 갤러리로 이동 (첫 번째 사진 폴더로 이동됨)
 if ($action === 'move_to_gallery' && $isAdmin) {
+    // 이동할 기본 폴더는 설정의 첫 번째 폴더로 지정
+    $targetDir = $photoDirs[0]; 
+
     $files = $_POST['files'] ?? [];
     foreach($files as $f) {
         $oldPath = $tempDir . basename($f);
@@ -60,27 +73,24 @@ if ($action === 'move_to_gallery' && $isAdmin) {
         $filename = pathinfo($f, PATHINFO_FILENAME);
         $ext = pathinfo($f, PATHINFO_EXTENSION);
         
-        // 중복 방지
         $newFileName = $f;
         $counter = 0;
-        while(file_exists($photoDir . $newFileName)) {
+        while(file_exists($targetDir . $newFileName)) {
             $newFileName = $filename . "_" . $counter . "." . $ext;
             $counter++;
         }
-        
-        rename($oldPath, $photoDir . $newFileName);
+        rename($oldPath, $targetDir . $newFileName);
     }
     echo "ok"; exit;
 }
 
-// 6. 파일 업로드 (주석 해제됨)
+// 6. 파일 업로드
 if ($action === 'upload') {
     if (!file_exists($tempDir)) {
         if (!@mkdir($tempDir, 0777, true)) {
             echo "폴더 생성 실패"; exit;
         }
     }
-
     if (isset($_FILES['files']['name'])) {
         foreach($_FILES['files']['tmp_name'] as $k => $tmp) {
             $name = basename($_FILES['files']['name'][$k]);
@@ -90,16 +100,19 @@ if ($action === 'upload') {
     echo "ok"; exit;
 }
 
-// 7. 다운로드
+// 7. 다운로드 (여러 폴더 검색 지원)
 if ($action === 'download') {
     $files = $_POST['files'] ?? [];
     if (count($files) === 0) exit;
 
     if (count($files) === 1) {
-        $path = file_exists($photoDir.basename($files[0])) ? $photoDir.basename($files[0]) : $videoDir.basename($files[0]);
-        if (file_exists($path)) {
+        $fname = basename($files[0]);
+        // 사진 폴더들과 영상 폴더들을 모두 뒤짐
+        $path = findFileInDirs($fname, $photoDirs) ?? findFileInDirs($fname, $videoDirs);
+        
+        if ($path && file_exists($path)) {
             header('Content-Type: application/octet-stream');
-            header('Content-Disposition: attachment; filename="'.basename($path).'"');
+            header('Content-Disposition: attachment; filename="'.$fname.'"');
             header('Content-Length: '.filesize($path));
             readfile($path);
             exit;
@@ -110,8 +123,9 @@ if ($action === 'download') {
         $zip = new ZipArchive();
         if ($zip->open($zipPath, ZipArchive::CREATE) === TRUE) {
             foreach ($files as $f) {
-                $path = file_exists($photoDir.basename($f)) ? $photoDir.basename($f) : $videoDir.basename($f);
-                if (file_exists($path)) $zip->addFile($path, basename($f));
+                $fname = basename($f);
+                $path = findFileInDirs($fname, $photoDirs) ?? findFileInDirs($fname, $videoDirs);
+                if ($path && file_exists($path)) $zip->addFile($path, $fname);
             }
             $zip->close();
             if (file_exists($zipPath)) {
