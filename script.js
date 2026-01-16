@@ -2,6 +2,7 @@ let audio = new Audio();
 let playlist = [];
 let cur = 0;
 let isStarted = false;
+let selectedFiles = []; // 업로드 파일 담을 배열
 
 $(document).ready(function() {
     const savedTheme = localStorage.getItem('theme') || 'dark-mode';
@@ -24,7 +25,118 @@ $(document).ready(function() {
     setTimeout(function() {
         showMsgModal("media.wooskor.com");
     }, 300000); 
+
+    // [드래그 앤 드롭 이벤트]
+    $(document).on('dragover', '#drop-zone', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    $(document).on('dragleave', '#drop-zone', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    $(document).on('drop', '#drop-zone', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        handleFiles(e.originalEvent.dataTransfer.files);
+    });
+    
+    // [클릭 이벤트] drop-zone 클릭 시 input 클릭 유도
+    $(document).on('click', '#drop-zone', function() {
+        $('#upFiles').click();
+    });
+    
+    // [파일 선택 완료 시]
+    $(document).on('change', '#upFiles', function() {
+        handleFiles(this.files);
+        // 같은 파일을 다시 선택할 수 있도록 값 초기화는 하지 않음 (multiple이므로)
+    });
 });
+
+// 파일 처리 함수
+function handleFiles(files) {
+    if (!files || files.length === 0) return;
+    
+    // 기존 파일 목록에 추가
+    for (let i = 0; i < files.length; i++) {
+        let file = files[i];
+        selectedFiles.push(file);
+        
+        // 미리보기 생성 (이미지인 경우만)
+        if (file.type.startsWith('image/')) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let html = `
+                    <div class="preview-item">
+                        <img src="${e.target.result}">
+                        <button class="preview-remove" onclick="removeFile(${selectedFiles.length - 1}, this)">×</button>
+                    </div>
+                `;
+                $('#preview-area').append(html);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // 이미지가 아닌 경우 아이콘 등으로 표시
+            let html = `
+                <div class="preview-item" style="display:flex; justify-content:center; align-items:center; background:#334155;">
+                    <span style="font-size:12px; text-align:center; word-break:break-all; padding:5px;">${file.name}</span>
+                    <button class="preview-remove" onclick="removeFile(${selectedFiles.length - 1}, this)">×</button>
+                </div>
+            `;
+            $('#preview-area').append(html);
+        }
+    }
+    updateUploadBtn();
+}
+
+// 개별 파일 취소 (배열에서 null 처리)
+function removeFile(index, btn) {
+    $(btn).parent().remove();
+    selectedFiles[index] = null;
+    updateUploadBtn();
+}
+
+// 업로드 버튼 상태 업데이트
+function updateUploadBtn() {
+    let validCount = selectedFiles.filter(f => f !== null).length;
+    
+    if(validCount > 0) {
+        $('#up-btn').prop('disabled', false);
+        $('#up-btn').text(`선택한 사진 ${validCount}장 업로드`);
+    } else {
+        $('#up-btn').prop('disabled', true);
+        $('#up-btn').text('선택한 사진 업로드');
+    }
+}
+
+// 서버로 업로드 전송
+function uploadNewFiles() {
+    let validFiles = selectedFiles.filter(f => f !== null);
+    if(validFiles.length === 0) return;
+
+    let fd = new FormData();
+    validFiles.forEach(f => fd.append('files[]', f));
+
+    $('#up-btn').text('업로드 중...').prop('disabled', true);
+
+    $.ajax({
+        url: 'api.php?action=upload', 
+        data: fd, 
+        type: 'POST', 
+        processData: false, 
+        contentType: false,
+        success: () => { 
+            selectedFiles = []; // 배열 초기화
+            loadPage(1, 'upload'); // 페이지 새로고침
+        },
+        error: () => {
+            alert('업로드 실패');
+            $('#up-btn').text('다시 시도').prop('disabled', false);
+        }
+    });
+}
 
 function loadPage(page, view) {
     localStorage.setItem('lastPage', page);
@@ -33,6 +145,8 @@ function loadPage(page, view) {
     $.get('content.php', { page: page, view: view }, function(html) {
         $('#ajax-content').html(html);
         window.scrollTo(0, 0);
+        // 페이지 변경 시 선택된 파일 배열 초기화
+        selectedFiles = []; 
     });
 }
 
@@ -92,54 +206,31 @@ function openModal(src) {
     $('body').css('overflow', 'hidden');
 }
 
-// [수정] 영상 모달 열기 (BGM 정지)
 function openVideoModal(src) {
     audio.pause(); 
     $('#now-title').text("BGM 일시정지 (영상 재생중)");
-    
     $('#modal-img').hide(); 
     $('#modal-video').attr('src', src).show();
     $('#modal').css('display', 'flex').hide().fadeIn(200);
     $('body').css('overflow', 'hidden');
-    
-    // 자동재생 시도
     let v = $('#modal-video')[0];
     v.volume = 0.5;
     v.play().catch(function(e){ console.log(e); });
 }
 
-// [수정] 모달 닫기 (BGM 다시 재생)
 function closeModal() {
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
         $('#modal-img').attr('src', '');
-        
         let v = $('#modal-video')[0];
         v.pause();
         v.src = "";
         $('#modal-video').hide();
-        
-        // 닫으면 BGM 다시 켜기
         playBgm();
     });
 }
 
 function selectAll(cls) { $(cls).prop('checked', true); }
-
-function checkFiles(input) {
-    $('#file-name-display').text(input.files.length + "개 선택됨");
-    $('#up-btn').prop('disabled', input.files.length === 0);
-}
-
-function upload() {
-    let fd = new FormData();
-    for(let f of $('#upFiles')[0].files) fd.append('files[]', f);
-    $.ajax({
-        url: 'api.php?action=upload', data: fd, type: 'POST', 
-        processData: false, contentType: false,
-        success: () => { loadPage(1, 'upload'); }
-    });
-}
 
 function downloadSelected() {
     let checked = $('.img-select:checked');
@@ -221,20 +312,15 @@ function showMsgModal(text) {
     }, 5000); 
 }
 
-// [추가됨] 브라우저 화면 캡처 및 서버 전송
+// [썸네일 생성 함수]
 function captureAndSaveThumb(video, filename) {
-    if (video.readyState < 2) return; // 로딩 안됐으면 패스
-
+    if (video.readyState < 2) return;
     let canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
     let ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    let dataURL = canvas.toDataURL('image/jpeg', 0.7); // 품질 0.7
-    
-    // 서버로 전송
+    let dataURL = canvas.toDataURL('image/jpeg', 0.7);
     $.post('api.php?action=save_thumb', {
         file: filename,
         image: dataURL
