@@ -40,7 +40,7 @@ if ($action === 'get_bgm') {
     exit;
 }
 
-// 4. [관리자] 임시 파일 삭제
+/* [기능 비활성화] 4. [관리자] 임시 파일 삭제
 if ($action === 'delete_temp' && $isAdmin) {
     $files = $_POST['files'] ?? [];
     foreach($files as $f) {
@@ -49,8 +49,9 @@ if ($action === 'delete_temp' && $isAdmin) {
     }
     echo "ok"; exit;
 }
+*/
 
-// 5. [관리자] 갤러리로 이동 (중복 이름 처리 포함)
+/* [기능 비활성화] 5. [관리자] 갤러리로 이동
 if ($action === 'move_to_gallery' && $isAdmin) {
     $files = $_POST['files'] ?? [];
     foreach($files as $f) {
@@ -74,8 +75,9 @@ if ($action === 'move_to_gallery' && $isAdmin) {
     }
     echo "ok"; exit;
 }
+*/
 
-// 6. 파일 업로드 (임시 폴더로 저장)
+/* [기능 비활성화] 6. 파일 업로드
 if ($action === 'upload') {
     // 폴더 없으면 생성
     if (!file_exists($tempDir)) @mkdir($tempDir, 0777, true);
@@ -88,6 +90,7 @@ if ($action === 'upload') {
     }
     echo "ok"; exit;
 }
+*/
 
 // 7. 다운로드 (단일/압축)
 if ($action === 'download') {

@@ -73,9 +73,9 @@ if ($view === 'gallery' || $view === 'video') {
 
 <?php 
 // ---------------------------------------------------------
-// 2. 업로드 페이지 (수정된 부분)
+// 2. 업로드 페이지 (비활성화 - 주석 처리)
 // ---------------------------------------------------------
-} else { 
+} /* else { 
 ?>
     <div class="upload-container">
         <h2 class="upload-title">사진 업로드</h2>
@@ -96,7 +96,6 @@ if ($view === 'gallery' || $view === 'video') {
 
         <?php
             // 임시 폴더 파일 목록 스캔
-            // [중요] 관리자가 아니어도 업로드 결과를 볼 수 있게 조건 완화 (원하시면 $isAdmin && 추가)
             $tempFiles = glob($tempDir . "*");
             
             if(count($tempFiles) > 0):
@@ -140,7 +139,7 @@ if ($view === 'gallery' || $view === 'video') {
         </div>
         <?php endif; ?>
     </div>
-<?php } 
+<?php } */ 
 
 function drawPager($p, $ts, $v) {
     if($ts <= 1) return;
