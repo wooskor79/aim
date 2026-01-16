@@ -9,6 +9,7 @@ $videoDirs = $config['video_dirs'];
 $tempDir   = $config['temp_dir'];
 $pwFile    = $config['pw_file'];
 $bgmDir    = $config['bgm_dir'];
+$videoCacheDir = $config['video_cache']; // [추가] 캐시 설정 로드
 
 $action  = $_REQUEST['action'] ?? '';
 $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
@@ -140,17 +141,19 @@ if ($action === 'download') {
     }
 }
 
-// 8. 썸네일 저장
+// 8. 썸네일 저장 (브라우저 생성 분)
 if ($action === 'save_thumb') {
     $file = $_POST['file'] ?? '';
     $data = $_POST['image'] ?? '';
-    $videoCacheDir = "/volume1/etc/cache/videos/";
+    
+    // [수정] config에서 가져온 캐시 경로 사용
     if (!file_exists($videoCacheDir)) @mkdir($videoCacheDir, 0777, true);
 
     if ($file && $data) {
         $data = str_replace('data:image/jpeg;base64,', '', $data);
         $data = str_replace(' ', '+', $data);
-        file_put_contents($videoCacheDir . basename($file) . ".jpg", base64_decode($data));
+        $imgData = base64_decode($data);
+        file_put_contents($videoCacheDir . basename($file) . ".jpg", $imgData);
         echo "saved";
     }
     exit;

@@ -6,6 +6,7 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
 $photoDirs = $config['photo_dirs'];
 $videoDirs = $config['video_dirs'];
 $tempDir   = $config['temp_dir'];
+$videoCacheDir = $config['video_cache']; // [추가] 캐시 경로 로드
 
 $view = $_GET['view'] ?? 'gallery';
 $page = $_GET['page'] ?? 1;
@@ -31,7 +32,6 @@ if ($view === 'gallery' || $view === 'video') {
         
         // 갤러리 모드일 때만 AIM1.jpg 맨 앞으로 고정 로직 (선택사항)
         if ($view === 'gallery') {
-            // 여러 폴더 중 어디에 AIM1.jpg가 있는지 모르므로 검색
             $pinnedKey = false;
             foreach($files as $k => $f) {
                 if(basename($f) === "AIM1.jpg") {
@@ -61,9 +61,19 @@ if ($view === 'gallery' || $view === 'video') {
             <div class="photo-card">
                 <input type="checkbox" class="img-select" value="<?=basename($item)?>">
                 <?php if($view === 'video'): ?>
+                    <?php
+                        // [수정] config에서 불러온 캐시 경로 사용
+                        $thumbPath = $videoCacheDir . basename($item) . ".jpg";
+                        $hasThumb = file_exists($thumbPath) && filesize($thumbPath) > 0;
+                    ?>
                     <div class="video-preview-wrapper" onclick="openVideoModal('stream.php?type=video&file=<?=urlencode(basename($item))?>')" style="width:100%; height:100%; position:relative; background:#000; cursor:pointer;">
-                         <video src="stream.php?type=video&file=<?=urlencode(basename($item))?>#t=1.0" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover; pointer-events: none;"></video>
-                         <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; font-size:30px;">▶</div>
+                        <?php if ($hasThumb): ?>
+                            <img src="stream.php?type=video&file=<?=urlencode(basename($item))?>&thumb=1" style="width:100%; height:100%; object-fit:cover;">
+                        <?php else: ?>
+                            <video src="stream.php?type=video&file=<?=urlencode(basename($item))?>#t=1.0" preload="metadata" muted playsinline onloadeddata="captureAndSaveThumb(this, '<?=basename($item)?>')" style="width:100%; height:100%; object-fit:cover; pointer-events: none;"></video>
+                        <?php endif; ?>
+                        <div class="video-info" style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; font-size:10px; padding:4px; text-align:center;"><?=basename($item)?></div>
+                        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; font-size:30px;">▶</div>
                     </div>
                 <?php else: ?>
                     <img src="stream.php?file=<?=urlencode(basename($item))?>&thumb=1" onclick="openModal('stream.php?file=<?=urlencode(basename($item))?>&full=1')">
@@ -131,7 +141,16 @@ if ($view === 'gallery' || $view === 'video') {
 function drawPager($p, $ts, $v) {
     if($ts <= 1) return;
     echo "<div class='pager'>";
-    // ... 페이징 로직 (생략, 기존과 동일) ...
+    echo "<a href='javascript:void(0)' onclick='loadPage(1, \"$v\")'>&laquo;</a>";
+    $prev = max(1, $p - 1);
+    echo "<a href='javascript:void(0)' onclick='loadPage($prev, \"$v\")'>&lt;</a>";
+    for($i=max(1, $p-2); $i<=min($ts, $p+2); $i++) {
+        $active = ($i == $p) ? "active" : "";
+        echo "<a href='javascript:void(0)' onclick='loadPage($i, \"$v\")' class='$active'>$i</a>";
+    }
+    $next = min($ts, $p + 1);
+    echo "<a href='javascript:void(0)' onclick='loadPage($next, \"$v\")'>&gt;</a>";
+    echo "<a href='javascript:void(0)' onclick='loadPage($ts, \"$v\")'>&raquo;</a>";
     echo "</div>";
 }
 ?>
