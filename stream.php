@@ -1,30 +1,38 @@
 <?php
-// stream.php
+// stream.php - 최종 수정본
+session_start();
 
 /* =========================
- * 1. 기본 설정
+ * 1. 기본 설정 및 경로
  * ========================= */
+// 로그 파일을 캐시 폴더 내부에 생성 (권한 문제 방지)
 $photoCacheDir = "/volume1/etc/cache/photos/";
 $videoCacheDir = "/volume1/etc/cache/videos/";
-$logFile       = $videoCacheDir . "debug.log"; // 로그도 캐시 폴더에 저장
+$logFile       = $videoCacheDir . "debug.log";
 
-// 캐시 폴더 생성
+// 캐시 폴더가 없으면 생성 시도
 @mkdir($photoCacheDir, 0777, true);
 @mkdir($videoCacheDir, 0777, true);
 
 /* =========================
- * 2. 요청 파라미터
+ * 2. 요청 파라미터 처리
  * ========================= */
 $type    = $_GET['type']  ?? 'gallery';
-$file    = basename($_GET['file'] ?? '');
+$file    = basename($_GET['file'] ?? ''); // 경로 조작 방지
 $full    = isset($_GET['full']);
 $isThumb = isset($_GET['thumb']);
 
+if (empty($file)) {
+    header("HTTP/1.0 400 Bad Request");
+    exit;
+}
+
 /* =========================
- * 3. 원본 경로 설정
+ * 3. 원본 파일 경로 매핑
  * ========================= */
+// 경로 끝에 슬래시(/)를 명확히 포함하여 이중 슬래시 문제 방지
 $basePhotoDir = "/volume1/ShareFolder/aimyon/Photos/";
-$baseVideoDir = "/volume1/ShareFolder/aimyon/묭영상/";
+$baseVideoDir = "/volume1/ShareFolder/aimyon/묭영상/"; // [중요] 한글 경로 확인
 $baseTempDir  = "/volume1/etc/aim/photo/";
 
 if ($type === 'temp') {
@@ -41,15 +49,20 @@ if (!file_exists($sourcePath)) {
 }
 
 /* =========================
- * 4. 전체 보기 및 스트리밍 (기존 로직 유지)
+ * 4. 스트리밍 및 원본 보기 로직
  * ========================= */
+// 동영상 원본 요청(재생)이거나 썸네일 요청이 아닐 때
 if ($full || ($type === 'video' && !$isThumb)) {
     $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
-    $mime = in_array($ext, ['mp4','webm','mov','m4v'])
-        ? "video/mp4"
-        : (@getimagesize($sourcePath)['mime'] ?? 'image/jpeg');
+    $mime = match($ext) {
+        'mp4','webm','mov','m4v' => 'video/mp4',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        default => 'image/jpeg'
+    };
 
     if ($type === 'video') {
+        // 비디오 스트리밍 (구간 탐색 지원)
         $size = filesize($sourcePath);
         $fp = @fopen($sourcePath, 'rb');
         $start = 0; $end = $size - 1;
@@ -93,6 +106,7 @@ if ($full || ($type === 'video' && !$isThumb)) {
         fclose($fp);
         exit;
     } else {
+        // 이미지 원본
         header("Content-Type: $mime");
         header("Content-Length: " . filesize($sourcePath));
         readfile($sourcePath);
@@ -101,7 +115,7 @@ if ($full || ($type === 'video' && !$isThumb)) {
 }
 
 /* =========================
- * 5. 썸네일 캐시 경로 확인
+ * 5. 썸네일 캐시 확인
  * ========================= */
 $cachePath = ($type === 'video')
     ? $videoCacheDir . $file . ".jpg"
@@ -120,7 +134,7 @@ if (file_exists($cachePath) && filesize($cachePath) > 0) {
 $created = false;
 $ext = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
 
-// (1) WebP (Imagick)
+// [1] WebP 처리 (Imagick)
 if ($ext === 'webp' && extension_loaded('imagick')) {
     try {
         $img = new Imagick($sourcePath);
@@ -135,7 +149,7 @@ if ($ext === 'webp' && extension_loaded('imagick')) {
     } catch (Exception $e) { $created = false; }
 }
 
-// (2) JPG/PNG (GD)
+// [2] 일반 이미지 처리 (GD)
 if (!$created && in_array($ext, ['jpg','jpeg','png']) && function_exists('imagecreatefromstring')) {
     $data = @file_get_contents($sourcePath);
     if ($data !== false) {
@@ -153,24 +167,23 @@ if (!$created && in_array($ext, ['jpg','jpeg','png']) && function_exists('imagec
     }
 }
 
-// (3) Video/GIF (FFmpeg)
+// [3] 비디오/GIF 썸네일 (FFmpeg)
 if (!$created && ($ext === 'gif' || $type === 'video')) {
     
-    // [수정됨] FFmpeg 경로 탐색 순서 변경 (패키지 버전 우선)
+    // [핵심 수정] 패키지 버전의 FFmpeg를 최우선으로 탐색
     $ffmpeg_candidates = [
-        '/var/packages/ffmpeg7/target/bin/ffmpeg', // 최신 패키지
-        '/var/packages/ffmpeg6/target/bin/ffmpeg', // 구버전 패키지
-        '/var/packages/ffmpeg/target/bin/ffmpeg',  // 일반 패키지
+        '/var/packages/ffmpeg6/target/bin/ffmpeg', // FFmpeg 6 (추천)
+        '/var/packages/ffmpeg7/target/bin/ffmpeg', // FFmpeg 7
+        '/var/packages/ffmpeg5/target/bin/ffmpeg', 
         '/usr/local/bin/ffmpeg',
-        '/usr/bin/ffmpeg' // 내장 (기능제한 버전) - 최후순위
+        // '/usr/bin/ffmpeg' // 내장 버전은 기능이 막혀있으므로 제외하거나 최후순위
     ];
 
     $ffmpeg = '';
     foreach ($ffmpeg_candidates as $path) {
         if (file_exists($path)) {
             $ffmpeg = $path;
-            
-            // 라이브러리 경로 설정 (패키지 버전일 경우 필요할 수 있음)
+            // 라이브러리 경로 호환성 해결
             if (strpos($path, 'packages') !== false) {
                  $libPath = dirname(dirname($path)) . '/lib';
                  putenv("LD_LIBRARY_PATH=$libPath");
@@ -182,7 +195,7 @@ if (!$created && ($ext === 'gif' || $type === 'video')) {
     if ($ffmpeg) {
         $seek = ($type === 'video') ? "-ss 00:00:02" : "";
         
-        // 명령어 실행
+        // 명령어 구성 (이중 슬래시 문제 해결된 $sourcePath 사용)
         $cmd = "$ffmpeg -y $seek -i " . escapeshellarg($sourcePath)
              . " -vframes 1 -an -q:v 2 -f image2 " . escapeshellarg($cachePath) . " 2>&1";
 
@@ -191,16 +204,17 @@ if (!$created && ($ext === 'gif' || $type === 'video')) {
         if (file_exists($cachePath) && filesize($cachePath) > 0) {
             $created = true;
         } else {
-            // 디버그 로그 기록
+            // 실패 시 디버그 로그 기록
             $logContent = "-------------- " . date('Y-m-d H:i:s') . " --------------\n";
-            $logContent .= "Selected FFmpeg: $ffmpeg\n"; // 어떤 ffmpeg가 선택됐는지 확인
-            $logContent .= "File: $file\n";
-            $logContent .= "Result Code: $ret\n";
+            $logContent .= "Used FFmpeg: $ffmpeg\n";
+            $logContent .= "Target File: $file\n";
+            $logContent .= "Source Path: $sourcePath\n";
+            $logContent .= "Return Code: $ret\n";
             $logContent .= "Output:\n" . implode("\n", $out) . "\n\n";
             @file_put_contents($logFile, $logContent, FILE_APPEND);
         }
     } else {
-        @file_put_contents($logFile, "No FFmpeg found in candidates.\n", FILE_APPEND);
+        @file_put_contents($logFile, "Error: 유효한 FFmpeg 패키지를 찾을 수 없습니다. (내장 버전 제외됨)\n", FILE_APPEND);
     }
 }
 
@@ -214,7 +228,7 @@ if ($created) {
     exit;
 }
 
-// 실패 시 이미지
+// 실패 시 에러 이미지 출력
 $im = imagecreatetruecolor(400, 300);
 $bg = imagecolorallocate($im, 30,0,0);
 $tc = imagecolorallocate($im, 255,255,255);

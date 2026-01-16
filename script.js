@@ -92,29 +92,35 @@ function openModal(src) {
     $('body').css('overflow', 'hidden');
 }
 
+// [수정] 영상 모달 열기 (BGM 정지)
 function openVideoModal(src) {
-    audio.pause(); // 영상 켤 때 BGM 정지
+    audio.pause(); 
     $('#now-title').text("BGM 일시정지 (영상 재생중)");
+    
     $('#modal-img').hide(); 
     $('#modal-video').attr('src', src).show();
     $('#modal').css('display', 'flex').hide().fadeIn(200);
     $('body').css('overflow', 'hidden');
-    $('#modal-video')[0].play().catch(function(e){ console.log(e); });
+    
+    // 자동재생 시도
+    let v = $('#modal-video')[0];
+    v.volume = 0.5;
+    v.play().catch(function(e){ console.log(e); });
 }
 
+// [수정] 모달 닫기 (BGM 다시 재생)
 function closeModal() {
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
         $('#modal-img').attr('src', '');
         
-        // 비디오 정지 및 리셋
         let v = $('#modal-video')[0];
         v.pause();
         v.src = "";
         $('#modal-video').hide();
         
-        // [수정] 모달 닫으면 BGM 다시 재생!
-        playBgm(); 
+        // 닫으면 BGM 다시 켜기
+        playBgm();
     });
 }
 
@@ -213,4 +219,26 @@ function showMsgModal(text) {
         $('#msg-modal').removeClass('show');
         setTimeout(() => $('#msg-modal').css('display', 'none'), 500); 
     }, 5000); 
+}
+
+// [추가됨] 브라우저 화면 캡처 및 서버 전송
+function captureAndSaveThumb(video, filename) {
+    if (video.readyState < 2) return; // 로딩 안됐으면 패스
+
+    let canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    let dataURL = canvas.toDataURL('image/jpeg', 0.7); // 품질 0.7
+    
+    // 서버로 전송
+    $.post('api.php?action=save_thumb', {
+        file: filename,
+        image: dataURL
+    }, function(res) {
+        console.log('Thumbnail saved: ' + filename + ' (' + res + ')');
+    });
 }

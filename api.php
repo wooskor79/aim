@@ -74,7 +74,6 @@ if ($action === 'download') {
 
     if ($fileCount === 0) exit;
 
-    // [수정됨] 파일 경로 찾는 헬퍼 함수 (사진 폴더 없으면 영상 폴더 확인)
     function getFilePath($fname, $pDir, $vDir) {
         $p = $pDir . basename($fname);
         if (file_exists($p)) return $p;
@@ -85,7 +84,6 @@ if ($action === 'download') {
 
     if ($fileCount === 1) {
         $filePath = getFilePath($files[0], $photoDir, $videoDir);
-        
         if ($filePath && file_exists($filePath)) {
             if (ob_get_level()) ob_end_clean();
             header('Content-Type: application/octet-stream');
@@ -97,7 +95,7 @@ if ($action === 'download') {
     } 
     else {
         $zip = new ZipArchive();
-        $zipFileName = "aimyon_files_" . date("Ymd_His") . ".zip"; // 파일명 photos -> files로 변경
+        $zipFileName = "aimyon_files_" . date("Ymd_His") . ".zip";
         $zipFilePath = $tempDir . $zipFileName;
 
         if ($zip->open($zipFilePath, ZipArchive::CREATE) === TRUE) {
@@ -120,5 +118,28 @@ if ($action === 'download') {
             }
         }
     }
+}
+
+// [추가됨] 브라우저에서 보낸 썸네일 저장
+if ($action === 'save_thumb') {
+    $file = $_POST['file'] ?? '';
+    $data = $_POST['image'] ?? '';
+    $videoCacheDir = "/volume1/etc/cache/videos/"; // 저장 경로
+    
+    // 폴더 없으면 생성
+    if (!file_exists($videoCacheDir)) @mkdir($videoCacheDir, 0777, true);
+
+    if ($file && $data) {
+        // Base64 데이터 디코딩
+        $data = str_replace('data:image/jpeg;base64,', '', $data);
+        $data = str_replace(' ', '+', $data);
+        $imgData = base64_decode($data);
+        
+        // 파일명.jpg로 저장
+        $savePath = $videoCacheDir . basename($file) . ".jpg";
+        file_put_contents($savePath, $imgData);
+        echo "saved";
+    }
+    exit;
 }
 ?>
