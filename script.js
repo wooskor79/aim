@@ -9,7 +9,7 @@ $(document).ready(function() {
     $('#theme-checkbox').prop('checked', savedTheme === 'dark-mode');
 
     const lastPage = localStorage.getItem('lastPage') || 1;
-    const lastView = localStorage.getItem('lastView') || 'gallery';
+    const lastView = localStorage.getItem('lastView') === 'video' ? 'gallery' : (localStorage.getItem('lastView') || 'gallery');
     loadPage(lastPage, lastView);
 
     audio.volume = 0.3;
@@ -86,33 +86,15 @@ function login() {
 function logout() { $.post('api.php?action=logout', () => location.reload()); }
 
 function openModal(src) { 
-    $('#modal-video').hide().attr('src', ''); 
     $('#modal-img').attr('src', src).show(); 
     $('#modal').css('display', 'flex').hide().fadeIn(200); 
     $('body').css('overflow', 'hidden');
 }
 
-function openVideoModal(src) {
-    stopBgm(); 
-    $('#modal-img').hide();
-    $('#modal-video').attr('src', src).show();
-    $('#modal').css('display', 'flex').hide().fadeIn(200);
-    $('body').css('overflow', 'hidden');
-    $('#modal-video')[0].play();
-}
-
 function closeModal() {
-    const videoElement = $('#modal-video')[0];
-    if (videoElement) {
-        videoElement.pause();
-        videoElement.src = "";
-        videoElement.load();
-    }
-
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
-        // 모달 닫기 완료 후 배경음악 다시 재생
-        playBgm();
+        $('#modal-img').attr('src', '');
     });
 }
 

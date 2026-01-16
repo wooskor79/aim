@@ -24,6 +24,13 @@ if ($view === 'gallery' || $view === 'video') {
 ?>
     <?php drawPager($page, $pages, $view); ?>
     
+    <?php if($view === 'gallery'): ?>
+    <div class="toolbar">
+        <button class="css-btn css-btn-gray" onclick="selectAll('.img-select')">전체 선택</button>
+        <button class="css-btn" style="background: #f59e0b; color: #fff;" onclick="downloadSelected()">선택 다운로드</button>
+    </div>
+    <?php endif; ?>
+
     <div class="photo-grid">
         <?php foreach($items as $item): ?>
             <div class="photo-card">
@@ -42,7 +49,7 @@ if ($view === 'gallery' || $view === 'video') {
                     </div>
                 <?php else: ?>
                     <input type="checkbox" class="img-select" value="<?=basename($item)?>">
-                    <img src="stream.php?file=<?=urlencode(basename($item))?>" onclick="openModal('stream.php?file=<?=urlencode(basename($item))?>&full=1')">
+                    <img src="stream.php?file=<?=urlencode(basename($item))?>&thumb=1" onclick="openModal('stream.php?file=<?=urlencode(basename($item))?>&full=1')">
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>
@@ -51,6 +58,7 @@ if ($view === 'gallery' || $view === 'video') {
     <?php drawPager($page, $pages, $view); ?>
 <?php } else { 
     // 업로드 대기열 로직 (기존 유지)
+    // 기존 코드 생략 없이 유지해주세요. 필요하다면 이 부분도 제공하겠습니다.
 }
 
 function drawPager($p, $ts, $v) {
