@@ -9,7 +9,10 @@ $(document).ready(function() {
     $('#theme-checkbox').prop('checked', savedTheme === 'dark-mode');
 
     const lastPage = localStorage.getItem('lastPage') || 1;
-    const lastView = localStorage.getItem('lastView') === 'video' ? 'gallery' : (localStorage.getItem('lastView') || 'gallery');
+    // lastView가 video였으면 그대로 유지하도록 수정 (기존 로직: video면 gallery로 강제하던 부분 제거 고려했으나, 사용자 요청에 따라 유지)
+    // 기존 로직 유지: const lastView = localStorage.getItem('lastView') === 'video' ? 'gallery' : (localStorage.getItem('lastView') || 'gallery');
+    // 사용자가 '영상 보기' 기능을 원하므로 video 상태도 저장되게 변경하는 것이 좋음.
+    let lastView = localStorage.getItem('lastView') || 'gallery';
     loadPage(lastPage, lastView);
 
     audio.volume = 0.3;
@@ -86,15 +89,31 @@ function login() {
 function logout() { $.post('api.php?action=logout', () => location.reload()); }
 
 function openModal(src) { 
+    $('#modal-video').hide(); // 비디오 숨김
     $('#modal-img').attr('src', src).show(); 
     $('#modal').css('display', 'flex').hide().fadeIn(200); 
     $('body').css('overflow', 'hidden');
+}
+
+// [추가] 비디오 모달 열기
+function openVideoModal(src) {
+    $('#modal-img').hide(); // 이미지 숨김
+    $('#modal-video').attr('src', src).show();
+    $('#modal').css('display', 'flex').hide().fadeIn(200);
+    $('body').css('overflow', 'hidden');
+    // 자동 재생 시도
+    $('#modal-video')[0].play().catch(function(e){ console.log(e); });
 }
 
 function closeModal() {
     $('#modal').fadeOut(200, function() {
         $('body').css('overflow', 'auto');
         $('#modal-img').attr('src', '');
+        // 비디오 정지 및 소스 초기화
+        let v = $('#modal-video')[0];
+        v.pause();
+        v.src = "";
+        $('#modal-video').hide();
     });
 }
 

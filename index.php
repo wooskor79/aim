@@ -49,6 +49,7 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
     
     <div class="menu-list">
         <button class="css-btn" onclick="loadPage(1, 'gallery')">갤러리 보기</button>
+        <button class="css-btn" style="background: #8b5cf6; color: #fff;" onclick="loadPage(1, 'video')">영상 보기</button>
         <button class="css-btn css-btn-gray" onclick="loadPage(1, 'upload')">사진 업로드</button>
     </div>
 </div>
@@ -59,6 +60,7 @@ $isAdmin = isset($_SESSION['admin']) && $_SESSION['admin'] === true;
 
 <div id="modal" onclick="closeModal()">
     <img id="modal-img" alt="아이묭 사진 크게 보기" style="display:none;">
+    <video id="modal-video" controls style="display:none; max-width:95%; max-height:95%;" onclick="event.stopPropagation()"></video>
 </div>
 
 <div id="msg-modal" class="msg-modal">
