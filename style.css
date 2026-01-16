@@ -42,9 +42,7 @@ body {
 .css-btn-gray { background: #64748b; color: white; }
 .css-btn:hover { opacity: 0.9; }
 
-.toolbar {
-    display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0 15px; padding-right: 5px;
-}
+.toolbar { display: flex; justify-content: flex-start; gap: 10px; margin: 10px 0 15px; padding-right: 5px; }
 .toolbar .css-btn { width: auto; display: inline-block; padding: 8px 16px; margin-bottom: 0; font-size: 13px; }
 
 .switch-wrap { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; }
@@ -110,32 +108,52 @@ input:checked + .slider:before { transform: translateX(24px); }
 .msg-modal.show .msg-content { transform: translateY(0); }
 #msg-text { color: var(--text-color); font-size: 20px; font-weight: bold; margin: 0; }
 
-/* [업로드 페이지 스타일] */
-.upload-container {
-    max-width: 800px; margin: 0 auto; background: var(--card-bg); padding: 30px;
-    border-radius: 15px; border: 1px solid var(--border-color);
-}
-.upload-title { text-align: center; margin-bottom: 20px; color: var(--accent-blue); }
+/* [업로드 페이지 스타일 - 화면 전체 너비] */
+.upload-wrapper { display: block; width: 100%; }
+.upload-title { text-align: left; margin-bottom: 20px; color: var(--accent-blue); font-size: 24px; font-weight: bold; padding-left: 5px; }
 
 #drop-zone {
-    width: 100%; height: 200px; border: 2px dashed var(--border-color); border-radius: 10px;
+    width: 100%; height: 200px; border: 2px dashed #475569; border-radius: 12px;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.2); color: #94a3b8; margin-bottom: 20px;
+    cursor: pointer; transition: 0.3s; background: rgba(30, 41, 59, 0.6); margin-bottom: 30px; box-sizing: border-box;
 }
-#drop-zone.dragover { border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); }
-#drop-zone p { margin: 5px 0; font-size: 14px; }
-#drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
+#drop-zone:hover, #drop-zone.dragover { border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); transform: scale(1.005); }
+#drop-zone .icon { font-size: 48px; margin-bottom: 15px; opacity: 0.8; }
+#drop-zone .main-text { margin: 5px 0; font-size: 16px; color: #e2e8f0; font-weight: 500; }
+#drop-zone .sub-text { font-size: 13px; color: #64748b; margin-top: 5px; }
 
-#preview-area {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px;
-}
-.preview-item {
-    position: relative; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);
-}
+#preview-area { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.preview-item { position: relative; aspect-ratio: 1/1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); background: #000; }
 .preview-item img { width: 100%; height: 100%; object-fit: cover; }
 .preview-remove {
-    position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); color: white;
-    border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;
-    font-size: 12px; display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); color: white;
+    border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
 }
-.staging-area { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+.preview-remove:hover { background: #ef4444; }
+
+#up-btn {
+    background: #10b981; color: white; width: 100%; padding: 16px; font-size: 16px; 
+    border-radius: 8px; margin-top: 10px; border: none; font-weight: bold; transition: 0.2s; cursor: pointer;
+}
+#up-btn:hover { background: #059669; }
+#up-btn.disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+
+/* [하단 대기열 스타일] */
+.staging-area { margin-top: 50px; border-top: 1px solid var(--border-color); padding-top: 30px; text-align: left; }
+.staging-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.staging-toolbar .left-tools { display: flex; gap: 10px; width: 100%; }
+
+/* [모달 스타일] */
+.custom-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); z-index: 30000; justify-content: center; align-items: center;
+}
+.modal-content {
+    background: var(--card-bg); padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
+    text-align: center; border: 1px solid var(--accent-blue); box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+.modal-content h3 { margin-top: 0; color: var(--accent-blue); margin-bottom: 15px; }
+.modal-content p { margin: 20px 0; font-size: 16px; color: var(--text-color); line-height: 1.5; }
+.modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 25px; }
+.modal-btns button { width: 100px; padding: 10px; }
