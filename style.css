@@ -157,3 +157,63 @@ input:checked + .slider:before { transform: translateX(24px); }
 .modal-content p { margin: 20px 0; font-size: 16px; color: var(--text-color); line-height: 1.5; }
 .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 25px; }
 .modal-btns button { width: 100px; padding: 10px; }
+
+/* [반응형 레이아웃 - 모바일 및 폴더블 기기 대응] */
+@media (max-width: 1024px) {
+    body {
+        flex-direction: column;
+    }
+
+    #sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        padding: 20px;
+    }
+
+    #sidebar h1 {
+        margin-bottom: 15px;
+        font-size: 20px;
+    }
+
+    .switch-wrap {
+        margin-bottom: 15px;
+    }
+
+    .bgm-box {
+        margin-bottom: 15px;
+    }
+
+    #main-content {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px 10px;
+    }
+
+    /* 사진 그리드 조정: 한 줄에 더 많은 사진이 보이도록 minmax 크기 축소 */
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+    }
+
+    /* 모바일에서 툴바 버튼 크기 및 간격 조정 */
+    .toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .toolbar .css-btn {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* 아주 작은 모바일 기기 대응 */
+@media (max-width: 480px) {
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 5px;
+    }
+}
